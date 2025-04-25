@@ -1,0 +1,25 @@
+parallel: false
+num_process: 4
+num_case_limit: 512
+scoreboard_testcases: 50
+dataset_dir: "in"
+
+result_dir: "result/{RUN_ID}"
+
+# print_columns:
+#   - score
+
+runner:
+  run_command: "cat {INPUT_FILE} | {SOLVER_CMD} 2> {SOLVER_OUTPUT}"
+  # run_command: "tools/target/release/tester {SOLVER_CMD} < {INPUT_FILE} 2>&1 > {SOLVER_OUTPUT} | sed -e 's/Score = \\([0-9]*\\)/{\"score\": \\1}/'"
+
+optuna:
+  num_trials: 20
+  train_id: ""  # If empty, create new one
+  sqlite_db_path: "train.db"
+  result_dir: "{TRAIN_ID}"
+
+# Google Sheets に出力したい場合
+# google_sheets:
+#   gcp_sa_path: "path/to/gcp_credential.json"
+#   sheet_key: "***"

@@ -1,0 +1,8 @@
+__pycache__/
+.mypy_cache/
+.vscode/
+result*/
+train*/
+.python-version
+solver.out
+train.db
