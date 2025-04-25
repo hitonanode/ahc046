@@ -1,7 +1,7 @@
 parallel: false
-num_process: 4
+num_process: 6
 num_case_limit: 512
-scoreboard_testcases: 50
+scoreboard_testcases: 150
 dataset_dir: "in"
 
 result_dir: "result/{RUN_ID}"
@@ -20,6 +20,6 @@ optuna:
   result_dir: "{TRAIN_ID}"
 
 # Google Sheets に出力したい場合
-# google_sheets:
-#   gcp_sa_path: "path/to/gcp_credential.json"
-#   sheet_key: "***"
+google_sheets:
+  gcp_sa_path: "../gcp_credential.json"
+  sheet_key: "1GwAL1eZ1Cdjp1nsWXBtxgCvyo7YBq2jgx3PLjiDdMC8"
