@@ -1,5 +1,6 @@
 #include "common.hpp"
 #include <array>
+#include <cstdlib>
 
 using namespace std;
 using lint = long long;
@@ -393,7 +394,7 @@ int main(int argc, char *argv[]) {
 
     auto try_move = [&](AlterPlans state) -> pair<int, AlterPlans> {
         int best_e = inf;
-        AlterPlans best_state;
+        AlterPlans best_state = state;
         FOR(t, 1, M) {
             auto &v = state.at(t);
             REP(d, v.size()) {
@@ -485,30 +486,41 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    REP(_, 0) {
-        const int choice = rand_int() % 2;
+    // REP(_, 10) {
+    //     auto [e, new_state] = try_move(state);
+    //     if (e < opt) {
+    //         opt = e;
+    //         state = new_state;
+    //         dbg(make_tuple(choice, opt));
+    //     }
+    // }
+
+    while (timer.spent_ms() < 1900) {
+        const int choice = rand_int() % 3;
         if (choice == 0) {
             auto [e, new_state] = greedy_insert(state);
             tspimprove(points, new_state);
+            e = FastEvaluateAll(points, new_state);
             if (e < opt) {
                 opt = e;
                 state = new_state;
-                dbg(make_tuple(choice, opt, e));
+                dbg(make_tuple(choice, opt));
             }
         } else if (choice == 1) {
             auto [e, new_state] = greedy_delete(state);
             tspimprove(points, new_state);
+            e = FastEvaluateAll(points, new_state);
             if (e < opt) {
                 opt = e;
                 state = new_state;
-                dbg(make_tuple(choice, opt, e));
+                dbg(make_tuple(choice, opt));
             }
         } else {
             auto [e, new_state] = try_move(state);
             if (e < opt) {
                 opt = e;
                 state = new_state;
-                dbg(make_tuple(choice, opt, e));
+                dbg(make_tuple(choice, opt));
             }
         }
     }
