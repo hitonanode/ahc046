@@ -236,6 +236,56 @@ int FastEvaluateAll(std::array<Point, M> points, AlterPlans &plans) {
     return ret;
 }
 
+void tspimprove(std::array<Point, M> points, AlterPlans &state) {
+    BanStates ban;
+    FOR(tick, 1, M) {
+        auto &vec = state.at(tick);
+        int eval = EvaluateSteps(points.at(tick - 1), points.at(tick), vec, ban);
+        if (vec.size() > 1) {
+            FOR(i, 1, vec.size()) {
+                swap(vec.at(i - 1), vec.at(i));
+                if (chmin(eval, EvaluateSteps(points.at(tick - 1), points.at(tick), vec, ban))) {
+                } else {
+                    swap(vec.at(i - 1), vec.at(i));
+                }
+            }
+        }
+        for (auto i : state.at(tick)) ban.set(i);
+    }
+
+    int eval = FastEvaluateAll(points, state);
+
+    FOR(tick, 1, M - 1) {
+        if (state.at(tick).empty()) continue;
+        Point v = state.at(tick).back();
+        state.at(tick).pop_back();
+        state.at(tick + 1).insert(state.at(tick + 1).begin(), v);
+        if (chmin(eval, FastEvaluateAll(points, state))) {
+
+        } else {
+            state.at(tick).push_back(v);
+            state.at(tick + 1).erase(state.at(tick + 1).begin());
+        }
+    }
+}
+
+#include <chrono>
+
+class timer_ {
+    std::chrono::system_clock::time_point start_;
+
+public:
+    timer_() : start_(now()) {}
+
+    static std::chrono::system_clock::time_point now() { return std::chrono::system_clock::now(); }
+
+    int spent_ms() const {
+        auto diff = now() - start_;
+        return std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();
+    }
+} timer;
+
+
 int main(int argc, char *argv[]) {
     {
         int N_, M_;
@@ -251,10 +301,7 @@ int main(int argc, char *argv[]) {
     REP(i, M) points.at(i) = f(xs.at(i), ys.at(i));
     dbg(points);
 
-    AlterPlans state;
-    int opt = FastEvaluateAll(points, state);
-
-    auto greedy_insert = [&]() {
+    auto greedy_insert = [&](AlterPlans state) -> pair<int, AlterPlans> {
         vector<tuple<int, int, int, Point>> cands;
 
         BanStates ban;
@@ -309,83 +356,160 @@ int main(int argc, char *argv[]) {
                 best_t = t;
                 best_d = d;
                 best_idx = idx;
-                dbg(make_tuple(best_e, best_t, best_d, best_idx));
+                // dbg(make_tuple(best_e, best_t, best_d, best_idx));
             }
         }
 
-        if (chmin(opt, best_e)) {
+        if (best_e < inf) {
             state.at(best_t).insert(state.at(best_t).begin() + best_d, best_idx);
-            return true;
+            return {best_e, state};
         } else {
-            return false;
+            return {inf, state};
         }
     };
 
-    while (greedy_insert()) {
-        // dbg(state);
-    }
+    auto greedy_delete = [&](AlterPlans state) -> pair<int, AlterPlans> {
+        int best_e = inf;
+        int best_t = -1, best_d = -1;
+        FOR(t, 1, M) {
+            REP(d, state.at(t).size()) {
+                const int v = state.at(t).at(d);
+                state.at(t).erase(state.at(t).begin() + d);
+                if (chmin(best_e, FastEvaluateAll(points, state))) {
+                    best_t = t;
+                    best_d = d;
+                }
+                state.at(t).insert(state.at(t).begin() + d, v);
+            }
+        }
 
-    REP(_, 100) {
-        const int choice = rand_int() % 3;
-        if (choice == 0) {
-            greedy_insert();
+        if (best_e < inf) {
+            state.at(best_t).erase(state.at(best_t).begin() + best_d);
+            return {best_e, state};
+        } else {
+            return {inf, state};
+        }
+    };
+
+    auto try_move = [&](AlterPlans state) -> pair<int, AlterPlans> {
+        int best_e = inf;
+        AlterPlans best_state;
+        FOR(t, 1, M) {
+            auto &v = state.at(t);
+            REP(d, v.size()) {
+                const Point s = v.at(d);
+                REP(dir, 4) {
+                    const int x = s / N + dx[dir];
+                    const int y = s % N + dy[dir];
+                    if (!isin(x, y)) continue;
+                    v.at(d) = f(x, y);
+                    if (chmin(best_e, FastEvaluateAll(points, state))) { best_state = state; }
+                    v.at(d) = s;
+                }
+            }
+        }
+
+        if (best_e < inf) {
+            return {best_e, best_state};
+        } else {
+            return {inf, state};
+        }
+    };
+
+    AlterPlans state;
+    int opt = FastEvaluateAll(points, state);
+
+    while (true) {
+        auto [e, new_state] = greedy_insert(state);
+        if (e < opt) {
+            opt = e;
+            state = new_state;
+            dbg(make_tuple(opt, e));
+        } else {
+            break;
         }
     }
 
-    // std::array<int, N * N> gri_sum;
-    // gri_sum.fill(0);
-    // FOR(t, 1, M) {
-    //     REP(i, N * N) {
-    //         gri_sum.at(i) += gris.at(t).at(i);
-    //     }
-    // }
-    // dbg(gri_sum);
+    while (true) {
+        auto [e, new_state] = greedy_delete(state);
+        if (chmin(opt, e)) {
+            opt = e;
+            state = new_state;
+            dbg(make_tuple(-2, opt, e));
+        } else {
+            auto [e, newnew_state] = greedy_insert(new_state);
+            if (chmin(opt, e)) {
+                opt = e;
+                state = newnew_state;
+                dbg(make_tuple(-3, opt, e));
+            } else {
+                break;
+            }
+        }
+    }
 
-    // REP(_, 10) {
-    //     int best_reward = 0;
-    //     int arg_best_reward = -1;
-    //     REP(i, N * N) {
-    //         const int cost0 = EvaluateSteps(points[0], points[1], state.at(1), BanStates{});
-    //         state.at(1).push_back(i);
-    //         const auto cost = EvaluateSteps(points[0], points[1], state.at(1), BanStates{}) - cost0;
-    //         state.at(1).pop_back();
-
-    //         const int reward = gri_sum.at(i) - cost - 1;
-    //         if (chmax(best_reward, reward)) {
-    //             arg_best_reward = i;
-    //         }
-    //     }
-
-    //     if (best_reward > 0) {
-    //         state.at(1).push_back(arg_best_reward);
-    //         dbg(make_tuple(best_reward, FastEvaluateAll(points, state)));
-
-    //         BanStates ban;
-    //         gri_sum.fill(0);
-    //         FOR(t, 1, M) {
-    //             for (int i : state.at(t - 1)) ban.set(i);
-    //             gris.at(t) = GetReductionIf(points.at(t - 1), points.at(t), state.at(t), ban);
-    //             REP(i, N * N) gri_sum.at(i) += gris.at(t).at(i);
-    //         }
-
-    //     } else {
-    //         break;
-    //     }
-    // }
-
-    int steps = FastEvaluateAll(points, state);
-    dbg(steps);
+    FOR(tick, 1, M) {
+        for (int d = 0; d < (int)state.at(tick).size(); d++) {
+            auto nxt_state = state;
+            nxt_state.at(tick).erase(nxt_state.at(tick).begin() + d);
+            auto [e, new_state] = greedy_insert(nxt_state);
+            if (chmin(opt, e)) {
+                opt = e;
+                state = new_state;
+                dbg(make_tuple(-5, tick, d, opt));
+            }
+        }
+    }
 
     REP(_, 0) {
-        const int turn = rand_int() % 10 + 1;
-        const Point i = rand_int() % (N * N);
-        state.at(turn).push_back(i);
-        int e = FastEvaluateAll(points, state);
-        if (chmin(steps, e)) {
-            steps = e;
-            dbg(make_tuple(_, steps));
+        FOR(tick, 1, M) {
+            if (state.at(tick).size()) {
+                auto tmp = state;
+                tmp.at(tick).clear();
+                auto eval = FastEvaluateAll(points, state);
+                while (true) {
+                    auto [e, new_state] = greedy_insert(tmp);
+                    tspimprove(points, new_state);
+                    if (chmin(eval, e)) {
+                        tmp = new_state;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (chmin(opt, eval)) {
+                    dbg(make_tuple(_, tick, opt));
+                    state = tmp;
+                }
+            }
+        }
+    }
+
+    REP(_, 0) {
+        const int choice = rand_int() % 2;
+        if (choice == 0) {
+            auto [e, new_state] = greedy_insert(state);
+            tspimprove(points, new_state);
+            if (e < opt) {
+                opt = e;
+                state = new_state;
+                dbg(make_tuple(choice, opt, e));
+            }
+        } else if (choice == 1) {
+            auto [e, new_state] = greedy_delete(state);
+            tspimprove(points, new_state);
+            if (e < opt) {
+                opt = e;
+                state = new_state;
+                dbg(make_tuple(choice, opt, e));
+            }
         } else {
-            state.at(turn).pop_back();
+            auto [e, new_state] = try_move(state);
+            if (e < opt) {
+                opt = e;
+                state = new_state;
+                dbg(make_tuple(choice, opt, e));
+            }
         }
     }
 
