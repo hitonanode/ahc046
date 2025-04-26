@@ -236,8 +236,6 @@ int FastEvaluateAll(std::array<Point, M> points, AlterPlans &plans) {
     return ret;
 }
 
-// using Action = int;  // -1: go to next target, nonnegative: alter at i (0 <= i < N * N)
-
 int main(int argc, char *argv[]) {
     {
         int N_, M_;
@@ -256,8 +254,7 @@ int main(int argc, char *argv[]) {
     AlterPlans state;
     int opt = FastEvaluateAll(points, state);
 
-    REP(_, 100) {
-        
+    auto greedy_insert = [&]() {
         vector<tuple<int, int, int, Point>> cands;
 
         BanStates ban;
@@ -301,7 +298,7 @@ int main(int argc, char *argv[]) {
 
         sort(cands.begin(), cands.end());
         while (cands.size() > 100) cands.pop_back();
-        dbg(cands);
+        // dbg(cands);
         int best_e = inf;
         int best_t = -1, best_d = -1, best_idx = -1;
         for (auto [_, t, d, idx] : cands) {
@@ -318,25 +315,15 @@ int main(int argc, char *argv[]) {
 
         if (chmin(opt, best_e)) {
             state.at(best_t).insert(state.at(best_t).begin() + best_d, best_idx);
+            return true;
         } else {
-            break;
+            return false;
         }
+    };
 
-        // FOR(t, 1, M) {
-        //     dbg(t);
-        //     for (int i : state.at(t - 1)) ban.set(i);
-        // const auto gri = GetReductionIf(points.at(t - 1), points.at(t), state.at(t), ban);
-
-        // dbg(make_tuple(min_eval, min_i, min_tt, min_u));
+    while (greedy_insert()) {
+        // dbg(state);
     }
-
-    // std::array<std::array<int, N * N>, M> gris;
-    // gris.at(0).fill(0);
-    // FOR(t, 1, M) {
-    //     auto gri = GetReductionIf(points.at(t - 1), points.at(t), state.at(t), BanStates{});
-    //     gris.at(t) = gri;
-    // }
-
 
     // std::array<int, N * N> gri_sum;
     // gri_sum.fill(0);
