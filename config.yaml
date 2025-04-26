@@ -1,6 +1,6 @@
 parallel: true
-num_process: 6
-num_case_limit: 50
+num_process: 96
+num_case_limit: 512
 scoreboard_testcases: 150
 dataset_dir: "in"
 

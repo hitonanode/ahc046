@@ -325,6 +325,13 @@ int main(int argc, char *argv[]) {
         // dbg(state);
     }
 
+    REP(_, 100) {
+        const int choice = rand_int() % 3;
+        if (choice == 0) {
+            greedy_insert();
+        }
+    }
+
     // std::array<int, N * N> gri_sum;
     // gri_sum.fill(0);
     // FOR(t, 1, M) {
