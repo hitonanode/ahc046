@@ -495,7 +495,9 @@ int main(int argc, char *argv[]) {
     //     }
     // }
 
+    int loop = 0;
     while (timer.spent_ms() < 1900) {
+        ++loop;
         const int choice = rand_int() % 3;
         if (choice == 0) {
             auto [e, new_state] = greedy_insert(state);
@@ -524,6 +526,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+    cerr << loop << '\n';
 
     {
         std::string retstr;
