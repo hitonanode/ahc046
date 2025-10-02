@@ -454,7 +454,7 @@ int main(int argc, char *argv[]) {
     REP(_, 2) {
         FOR(tick, 1, M) {
             for (int d = 0; d < (int)state.at(tick).size(); d++) {
-                if (timer.spent_ms() > 1600) break;
+                // if (timer.spent_ms() > 1600) break;
                 auto nxt_state = state;
                 nxt_state.at(tick).erase(nxt_state.at(tick).begin() + d);
                 auto [e, new_state] = greedy_insert(nxt_state);
@@ -502,6 +502,7 @@ int main(int argc, char *argv[]) {
 
     int loop = 0;
     while (timer.spent_ms() < 1900) {
+        break;
         ++loop;
         const int choice = rand_int() % 3;
         if (choice == 0) {

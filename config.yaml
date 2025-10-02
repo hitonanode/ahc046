@@ -1,6 +1,6 @@
 parallel: true
-num_process: 6
-num_case_limit: 50
+num_process: 8
+num_case_limit: 500
 scoreboard_testcases: 150
 dataset_dir: "in"
 
@@ -19,7 +19,7 @@ optuna:
   sqlite_db_path: "train.db"
   result_dir: "{TRAIN_ID}"
 
-# Google Sheets に出力したい場合
-google_sheets:
-  gcp_sa_path: "../gcp_credential.json"
-  sheet_key: "1GwAL1eZ1Cdjp1nsWXBtxgCvyo7YBq2jgx3PLjiDdMC8"
+# # Google Sheets に出力したい場合
+# google_sheets:
+#   gcp_sa_path: "../gcp_credential.json"
+#   sheet_key: "1GwAL1eZ1Cdjp1nsWXBtxgCvyo7YBq2jgx3PLjiDdMC8"
